@@ -8,6 +8,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.ml.classification.DecisionTreeClassificationModel;
 import org.apache.spark.ml.classification.DecisionTreeClassifier;
+import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator;
 import org.apache.spark.ml.feature.OneHotEncoder;
 import org.apache.spark.ml.feature.StringIndexer;
 import org.apache.spark.ml.feature.StringIndexerModel;
@@ -16,6 +17,8 @@ import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.types.StructType;
+
+import com.codahale.metrics.Slf4jReporter.LoggingLevel;
 
 public class DecisionTreeApplication {
 
@@ -107,6 +110,12 @@ public class DecisionTreeApplication {
 		stopWatch.start();
 		DecisionTreeClassificationModel model = getModel(training);
 		stopWatch.stop();
+		
+		Dataset predictions = model.transform(testing);
+		predictions.show();
+		BinaryClassificationEvaluator evaluator = new BinaryClassificationEvaluator().setRawPredictionCol("rawPrediction").setLabelCol("indexedIncome");
+		double accuracy = evaluator.evaluate(predictions);
+		System.out.println("Accuracy: " + accuracy + "%.");
 
 		System.out.println("Time for creating/training the model: " + stopWatch.getTime() + " Milliseconds.");
 	}
